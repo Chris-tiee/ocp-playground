@@ -1,25 +1,24 @@
-# (Model) 2D-XY Bicycle Control
-*Future PhD workshop, Hannover, April 2025, Jakob Harzer, Yunfan Gao, Moritz Diehl*
+# (Model) Kinematic bicycle model
 
 <img src="_misc/BicycleXYfigure.png" width="500"/>
 
-## Dynamics:
-
+## Dynamics
+We consider a kinematic bicycle model.
+The state and control vectors are
 $$
 \begin{aligned}
 x = \begin{bmatrix}
 p_x \\
 p_y \\
 \theta
-\end{bmatrix} \in \mathrm{R}^3 && u = \begin{bmatrix}
+\end{bmatrix} \in \mathbb{R}^3, && u = \begin{bmatrix}
 \delta \\
 V
-\end{bmatrix} \in \mathrm{R}^2
+\end{bmatrix} \in \mathbb{R}^2
 \end{aligned}
 $$
-
-with position $p_x$, $p_y$, and heading angle $\theta$ relative to the $x$-axis. The vehicle is controlled with a specific steering angle $\delta$ and a fixed velocity $V$.
-
+with position $p_x$, $p_y$, and heading angle $\theta$ relative to the $x$-axis. The vehicle is controlled by choosing the steering angle $\delta$ and the velocity $V$.
+The resulting dynamics are
 $$
 \begin{aligned}
 \begin{bmatrix}
@@ -29,31 +28,31 @@ $$
 \end{bmatrix} = \dot{x} = f(x,u) =  \begin{bmatrix}
 V \cos(\theta + \beta) \\
 V \sin(\theta + \beta) \\
-\frac{V}{l_\mathrm{r}}\sin(\beta)
+\frac{V}{l_\mathrm{r}}\sin(\beta(\delta
+))
 \end{bmatrix}
 \end{aligned}
 $$
 
-The *side-slip angle* $\beta$ is given as
-
+The side-slip angle $\beta$ is 
 $$
-\beta = \arctan\left(\frac{l_\mathrm{r} \tan(\delta)}{l_\mathrm{r} + l_\mathrm{f}}\right)
+\beta(\delta) = \arctan\left(\frac{l_\mathrm{r} \tan(\delta)}{l_\mathrm{r} + l_\mathrm{f}}\right)
 $$
-
-and depends on the distances $l_\mathrm{r},l_\mathrm{f}$, of the center of mass to the front and rear wheels, in the plot we have $L = l_\mathrm{r} + l_\mathrm{f}$.
-
-## Ideas for Projects
-- (MEDIUM) collision avoidance (Open Loop Planning)
-- (MEDIUM) car parking problem (Open Loop Planning)
-- (HARD) collision avoidance (MPC)
+where $l_\mathrm{r},l_\mathrm{f}$ are the distances of the center of mass from the front resp. rear wheels. In the plot we have $L = l_\mathrm{r} + l_\mathrm{f}$.
 
 
 ## Details
 
 | State                                     | Symbol               | Unit  |
 | ----------------------------------------- | -------------------- | ----- |
-| p                                         | $p \in \mathbb{R}^2$ | $\mathrm{m}$      |
-| orientation relative to the vertical axis | $\phi \in \mathbb{R}$               | $\mathrm{rad}$    |
+| Position of center of mass                | $p \in \mathbb{R}^2$ | $\mathrm{m}$      |
+| Orientation relative to the vertical axis | $\phi \in \mathbb{R}$               | $\mathrm{rad}$    |
+
+| Control                                     | Symbol               | Unit  |
+| ----------------------------------------- | -------------------- | ----- |
+| Speed                                         | $V \in \mathbb{R}$ | $\mathrm{m} \mathrm{s}^{-1}$      |
+| Steering angle | $\delta \in \mathbb{R}$               | $\mathrm{rad}$    |
+
 
 | Parameter                              | Symbol         | Value | Unit          |
 | -------------------------------------- | -------------- | ----- | ------------- |

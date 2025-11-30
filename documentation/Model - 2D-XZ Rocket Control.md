@@ -1,12 +1,11 @@
 # (Model) 2D-XZ Rocket Control
-*Future PhD workshop, Hannover, April 2025, Jakob Harzer, Yunfan Gao, Moritz Diehl*
 
 In this model we consider a rocket in the 2D xz-plane:
 
 <img src="_misc/rocketSketch.svg"/>
 
 ## Dynamics
-
+The state and control vector are
 $$
 \begin{aligned}
 x = \begin{bmatrix}
@@ -21,21 +20,23 @@ v_x \\
 v_z \\
 \phi \\
 \dot{\phi}
-\end{bmatrix}\in \mathrm{R}^6 && u = \begin{bmatrix}
+\end{bmatrix}\in \mathbb{R}^6, && u = \begin{bmatrix}
 T \\
 \delta
-\end{bmatrix} \in \mathrm{R}^2
+\end{bmatrix} \in \mathbb{R}^2,
 \end{aligned}
 $$
 
-with 2D position $p \in \mathrm{R}^2$, velocity $v \in \mathrm{R}^2$, orientation angle $\phi$ relative to the vertical axis and rotational velocity $\dot{\phi}$, $\dot{\phi} >0$ is a counterclockwise rotation. The rocket is controlled using a thrust-vectoring system where the direction of the thrust can be changed using a gimbal.
+with 2D position $p \in \mathbb{R}^2$, velocity $v \in \mathbb{R}^2$, orientation angle $\phi$ relative to the vertical axis and rotational velocity $\dot{\phi}$.
+The rocket is controlled using a thrust-vectoring system where the direction of the thrust can be changed using a gimbal.
+The controls are the thrust $T$ and the angle $\delta$ with which it is applied.
 
 The following forces act on the rocket:
-- The thrust force results from the first control $T$:
+- The force vector resulting from thrust force $T$:
 
 $$
-F_\mathrm{T} = T \begin{bmatrix}  \sin(\phi + \delta) \\
--\cos(\phi + \delta)\end{bmatrix}
+F_\mathrm{T} = T \begin{bmatrix}  -\sin(\phi + \delta) \\
+\cos(\phi + \delta)\end{bmatrix}
 $$
 
 - Gravity
@@ -49,13 +50,12 @@ $$
 
 $$F_D(v, v_\mathrm{wind}) = ?$$
 
-The force from the thruster no only acceleartes the rocket but also creates a moment
+The force from the thruster no only acceleartes the rocket but also creates a torque
 
 $$
-M_\mathrm{T} = r \times F_\mathrm{T} =  - T \cdot d \cdot \sin(\delta)
+M_\mathrm{T} = r \times F_\mathrm{T} =  - T \cdot d \cdot \sin(\delta),
 $$
-
-which rotates the drone around it's center of mass.
+which rotates the rocket around its center of mass.
 Here $r$ is the vector of lenght $d$ from the rockets center of mass to the thruster.
 The dynamics are then given by:
 
@@ -75,14 +75,6 @@ I^{-1} M_\mathrm{T}
 \end{aligned}
 $$
 
-## Ideas for Projects
-- (MEDIUM) Use an LQR/PID controller to stabilize the drone.
-	- (MEDIUM) Extend the drone model with a airdrag force, stabilize the drone against a strong wind gust.
-	- (MEDIUM) USE an LQR controller to track a reference
-- (MEDIUM) Plan an open-loop trajectory for a point-to-point motion by solving an OCP.
-	- (HARD) Plan a time-optimal trajectory
-- (MEDIUM) Implement a tracking MPC-Controller
-	 - (HARD) Implement a collision-avoidance tracking MPC controller for two drones.
 
 ## Details
 
@@ -92,6 +84,13 @@ $$
 | XZ - velocity of the rocket                | $v \in \mathbb{R}^2$ | $\mathrm{m}\cdot \mathrm{s}^{-1}$ |
 | orientation relative to the vertical axis | $\phi  \in \mathbb{R}$              | $\mathrm{rad}$           |
 | angular velocity                          | $\dot{\phi} \in \mathbb{R}$         | $\mathrm{rad}\cdot \mathrm{s}^{-1}$         |
+
+| Control                                     | Symbol               | Unit          |
+| ----------------------------------------- | -------------------- | ------------- |
+| Thrust force               | $T\in \mathbb{R} $ | $\mathrm{N}$             |
+| Thrust angle               | $\delta\in \mathbb{R} $ | $\mathrm{rad}$             |
+
+
 
 | Parameter                   | Symbol | Value | Unit                      |
 | --------------------------- | ------ | ----- | ------------------------- |
