@@ -164,6 +164,5 @@ def open_loop():
     additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0], goal[3]], [goal[1], goal[4]]], "color": "tab:orange", "s": 100, "marker":"x"}}
     model.animateSimulation(x_trajectory, u_trajectory, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters)
 
-
 if __name__ == "__main__":
     open_loop()

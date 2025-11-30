@@ -12,10 +12,10 @@ class BaseModel:
 
 
         self.f_cont: ca.Function = None
-        """ Casadi Function for the rhs f(x,u) of the continuous dynamics \dot x = f(x,u). Use .full() to cast the result to a numpy array. """
+        """ Casadi Function for the rhs f(x,u) of the continuous dynamics xdot = f(x,u). Use .full() to cast the result to a numpy array. """
         self.f_disc: ca.Function = None
-        """ Casadi Function for the rhs f(x,u) of the discrete dynamics x_{k+1} = F(x_k, u_k) 
-        from an RK4 integrator, which use the piecewise constant control u_k over the interval specified by 'sampling time'.
+        """ Casadi Function for the rhs f(x,u) of the discrete dynamics x_{k+1} = F(x_k, u_k)
+        obtained by numerical integration of the continuous dynamics over one sampling period.
           Use .full() to cast the result to a numpy array. """
 
     def animateSimulation(self, x_trajectory: np.ndarray, u_trajectory: np.ndarray):
