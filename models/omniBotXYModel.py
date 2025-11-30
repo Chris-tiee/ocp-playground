@@ -36,9 +36,10 @@ class OmniBotXYModel(BaseModel):
             u[0],  # \dot{vx}
             u[1],  # \dot{vy}
         )
-        dae = {'x': x, 'p': u, 'ode': x_dot}
-        opts = {'tf': self._sampling_time}
-        self.I = ca.integrator('I', 'rk', dae, opts)
+        # set up integrator for discrete dynamics
+        # multiply xdot by sampling time (time scaling), since casadi integrator integrates over [0,1] by default
+        dae = {'x': x, 'p': u, 'ode': self._sampling_time * x_dot}
+        self.I = ca.integrator('I', 'rk', dae)
 
                 # create continuous and discrete dynamics
         self.f_cont = ca.Function('f_cont', [x, u], [x_dot])
@@ -69,8 +70,8 @@ class OmniBotXYModel(BaseModel):
             ax.set_aspect('equal')
             ax.set_xlim(-1, 5)
             ax.set_ylim(-1, 5)
-            ax.set_xlabel('px(m)', fontsize=14)
-            ax.set_ylabel('py(m)', fontsize=14)
+            ax.set_xlabel(r'$p_{\mathrm{x}}$ (m)', fontsize=14)
+            ax.set_ylabel(r'$p_{\mathrm{y}}$ (m)', fontsize=14)
 
             for i_agent in range(num_agents):
                 ax.scatter(x_trajectory[i_agent*nx, i], x_trajectory[i_agent*nx+1, i], color="tab:gray", s=50, zorder=2)
@@ -86,7 +87,10 @@ class OmniBotXYModel(BaseModel):
                         ax.plot(value["data"][0], value["data"][1], color=value["color"], linewidth=2, label=key)
             ax.set_title(f"OmniBot Simulation: Step {i+1}")
             fig.subplots_adjust(bottom=0.15)
-            plt.show(block=False)
-            plt.pause(0.2)
+            if i < sim_length:
+                plt.show(block=False)
+                plt.pause(0.2)
+            else:
+                plt.show(block=True)
             ax.clear()
         return

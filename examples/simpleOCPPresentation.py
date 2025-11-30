@@ -98,8 +98,8 @@ images_folder = os.path.join(local_path, "ocp_images")
 if not(os.path.exists(images_folder) and os.path.isdir(images_folder)):
     os.makedirs(images_folder)
 
+fig = plt.figure(figsize=(8,8))
 for i in range(ocp_config.n_hrzn + 1):
-    fig = plt.figure(0,figsize=(8,8))
     fig.clear()
     ax = fig.add_subplot(1, 1, 1)
     ax.set_xlim(-1.1, 2.1)
