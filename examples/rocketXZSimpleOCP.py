@@ -145,11 +145,8 @@ def open_loop():
     u_trajectory = ocp.u_sol
     x_trajectory = ocp.x_sol
 
-    # simulate open loop using model to ensure compatibility
-    x_traj_sim = model.simulateOpenLoop(x_init, u_trajectory)
-
     additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0]], [goal[1]]], "color": "tab:orange", "s": 100, "marker":"x"}}
-    model.animateSimulation(x_traj_sim, u_trajectory, additional_lines_or_scatters=additional_lines_or_scatters)
+    model.animateSimulation(x_trajectory, u_trajectory, additional_lines_or_scatters=additional_lines_or_scatters)
 
 
 if __name__ == "__main__":
