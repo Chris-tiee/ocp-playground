@@ -5,7 +5,7 @@ import matplotlib.patches as patches
 import matplotlib
 import numpy as np
 
-from models.baseModel import BaseModel
+# BaseModel removed: models should initialize sampling time directly
 
 """
 x = (px, pz, vx, vz, pitch, vpitch)
@@ -22,9 +22,10 @@ class RocketXZConfig:
     gravity: float = 9.81
 
 
-class RocketXZModel(BaseModel):
+class RocketXZModel:
     def __init__(self, sampling_time):
-        super().__init__(sampling_time)
+        # initialize sampling time directly (previously handled by BaseModel)
+        self._sampling_time = sampling_time
         self.model_name = "RocketXZModel"
         self.model_config = RocketXZConfig()
 

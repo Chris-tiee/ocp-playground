@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib
 
-from models.baseModel import BaseModel
+# BaseModel removed: models should initialize sampling time directly
 
 
 """
@@ -22,9 +22,10 @@ class DroneXZConfig:
     gravity: float = 9.81
 
 
-class DroneXZModel(BaseModel):
+class DroneXZModel:
     def __init__(self, sampling_time):
-        super().__init__(sampling_time)
+        # initialize sampling time directly (previously handled by BaseModel)
+        self._sampling_time = sampling_time
         self.model_name = "DroneXZModel"
         self.model_config = DroneXZConfig()
 
@@ -53,18 +54,6 @@ class DroneXZModel(BaseModel):
         # create continuous and discrete dynamics
         self.f_cont = ca.Function('f_cont', [x, u], [x_dot])
         self.f_disc = ca.Function('f_disc', [x, u], [self.I(x0=x, p=u)['xf']])
-
-    def linearizeContinuousDynamics(self, x, u):
-        A = self.A_func(x, u).full()
-        B = self.B_func(x, u).full()
-        return A, B
-
-
-    def linearizeDiscreteDynamics(self, x, u):
-        A = self.A_disc_func(x, u).full()
-        B = self.B_disc_func(x, u).full()
-        return A, B
-
 
     def animateSimulation(self, x_trajectory, u_trajectory, additional_lines_or_scatters=None):
         fontsize = 16

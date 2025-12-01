@@ -6,7 +6,7 @@ import matplotlib.patches as patches
 import matplotlib
 import numpy as np
 
-from models.baseModel import BaseModel
+# BaseModel removed: models should initialize sampling time directly
 
 
 """
@@ -21,9 +21,10 @@ class OmniBotXYConfig:
     safety_radius: float = 0.8
 
 
-class OmniBotXYModel(BaseModel):
+class OmniBotXYModel:
     def __init__(self, sampling_time):
-        super().__init__(sampling_time)
+        # initialize sampling time directly (previously handled by BaseModel)
+        self._sampling_time = sampling_time
         self.model_name = "OmniBotXYModel"
         self.model_config = OmniBotXYConfig()
 

@@ -7,7 +7,7 @@ import matplotlib.animation as animation
 import numpy as np
 
 
-from models.baseModel import BaseModel
+# BaseModel removed: models should initialize sampling time directly
 
 
 """
@@ -25,9 +25,10 @@ class BicycleXYConfig:
     lr: float = 0.5
     safety_radius: float = 0.8
 
-class BicycleXYModel(BaseModel):
+class BicycleXYModel:
     def __init__(self, sampling_time):
-        super().__init__(sampling_time)
+        # initialize sampling time directly (previously handled by BaseModel)
+        self._sampling_time = sampling_time
         self.model_name = "BicycleXYModel"
         self.model_config = BicycleXYConfig()
 
