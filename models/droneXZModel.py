@@ -5,8 +5,7 @@ import matplotlib.patches as patches
 import matplotlib
 import numpy as np
 
-# BaseModel removed: models should initialize sampling time directly
-
+ 
 
 """
 x = (px, pz, vx, vz, pitch, vpitch)
@@ -25,7 +24,6 @@ class DroneXZConfig:
 
 class DroneXZModel:
     def __init__(self, sampling_time):
-        # initialize sampling time directly (previously handled by BaseModel)
         self._sampling_time = sampling_time
         self.model_name = "DroneXZModel"
         self.model_config = DroneXZConfig()

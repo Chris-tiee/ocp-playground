@@ -7,8 +7,6 @@ import matplotlib.animation as animation
 import numpy as np
 
 
-# BaseModel removed: models should initialize sampling time directly
-
 
 """
 Consider the kinematic model only:
@@ -27,7 +25,6 @@ class BicycleXYConfig:
 
 class BicycleXYModel:
     def __init__(self, sampling_time):
-        # initialize sampling time directly (previously handled by BaseModel)
         self._sampling_time = sampling_time
         self.model_name = "BicycleXYModel"
         self.model_config = BicycleXYConfig()

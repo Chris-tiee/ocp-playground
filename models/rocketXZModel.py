@@ -5,8 +5,7 @@ import matplotlib.patches as patches
 import matplotlib
 import numpy as np
 
-# BaseModel removed: models should initialize sampling time directly
-
+ 
 """
 x = (px, pz, vx, vz, pitch, vpitch)
 a = (T, delta)
@@ -24,7 +23,6 @@ class RocketXZConfig:
 
 class RocketXZModel:
     def __init__(self, sampling_time):
-        # initialize sampling time directly (previously handled by BaseModel)
         self._sampling_time = sampling_time
         self.model_name = "RocketXZModel"
         self.model_config = RocketXZConfig()
