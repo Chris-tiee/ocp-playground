@@ -105,8 +105,8 @@ class RocketXZModel(BaseModel):
             ax.set_aspect('equal')
             ax.set_xlim(-1, 5)
             ax.set_ylim(-1, 5)
-            ax.set_xlabel('px(m)', fontsize=14)
-            ax.set_ylabel('pz(m)', fontsize=14)
+            ax.set_xlabel(r'$p_{\mathrm{x}}$ (m)', fontsize=14)
+            ax.set_ylabel(r'$p_{\mathrm{z}}$ (m)', fontsize=14)
             center_x = x_trajectory[0, i]
             center_z = x_trajectory[1, i]
             ax.scatter(center_x, center_z, color="tab:gray", s=50, zorder=2)

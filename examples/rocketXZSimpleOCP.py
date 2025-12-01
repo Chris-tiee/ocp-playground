@@ -22,132 +22,93 @@ class RocketOCPConfig:
     max_delta: float = 0.5
 
 
-class RocketXZSimpleOCP:
-    def __init__(self, sampling_time: float, model: rocketXZModel.RocketXZModel):
-        self._sampling_time = sampling_time
-        self._model = model
-        self._cfg = RocketOCPConfig()
+sampling_time = 0.05
+cfg = RocketOCPConfig()
 
-        self.x_sol = None
-        self.u_sol = None
-        self._x_0_param = None
-        self._goal_param = None
+model = rocketXZModel.RocketXZModel(sampling_time)
+nx = model.model_config.nx
+nu = model.model_config.nu
+N = cfg.n_hrzn
 
-    def _define_ocp_variables(self):
-        nx = self._model.model_config.nx
-        nu = self._model.model_config.nu
-        N = self._cfg.n_hrzn
-        self._x_opt = ca.MX.sym('x', nx, N+1)
-        self._u_opt = ca.MX.sym('u', nu, N)
-        self._x_0_param = ca.MX.sym('x_0', nx)
-        self._goal_param = ca.MX.sym('goal', nx)
+# initial state: px, pz, vx, vz, pitch, vpitch
+x_init = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+# goal: some forward and up position with nose up
+goal = np.array([3.0, 3.0, 0.0, 0.0, 0.0, 0.0])
 
-    def _setup_constraints(self):
-        nx = self._model.model_config.nx
-        nu = self._model.model_config.nu
-        N = self._cfg.n_hrzn
-        self._g = []
-        self._lbg = []
-        self._ubg = []
+# Decision variables
+x_opt = ca.MX.sym('x', nx, N+1)
+u_opt = ca.MX.sym('u', nu, N)
 
-        # input constraints (simple bound enforcement via inequality constraints)
-        for k in range(N):
-            self._g.append(self._u_opt[0, k])
-            self._lbg.append(self._cfg.min_T)
-            self._ubg.append(self._cfg.max_T)
-            self._g.append(self._u_opt[1, k])
-            self._lbg.append(-self._cfg.max_delta)
-            self._ubg.append(self._cfg.max_delta)
+# Parameters
+x_0_param = ca.MX.sym('x_0', nx)
+goal_param = ca.MX.sym('goal', nx)
 
-        # initial condition equality
-        self._g.append(self._x_opt[:, 0] - self._x_0_param)
-        self._lbg.append(np.zeros(nx,))
-        self._ubg.append(np.zeros(nx,))
+# Constraints and objective
+g = []
+lbg = []
+ubg = []
 
-        # dynamics equality constraints
-        for k in range(N):
-            x_next = self._model.f_disc(self._x_opt[:, k], self._u_opt[:, k])
-            self._g.append(self._x_opt[:, k+1] - x_next)
-        self._lbg.append(np.zeros(nx * N,))
-        self._ubg.append(np.zeros(nx * N,))
+# input constraints (simple bound enforcement via inequality constraints)
+for k in range(N):
+    g.append(u_opt[0, k])
+    lbg.append(cfg.min_T)
+    ubg.append(cfg.max_T)
+    g.append(u_opt[1, k])
+    lbg.append(-cfg.max_delta)
+    ubg.append(cfg.max_delta)
 
-    def _setup_obj_func(self):
-        nx = self._model.model_config.nx
-        nu = self._model.model_config.nu
-        N = self._cfg.n_hrzn
-        J = 0.0
-        for k in range(N):
-            x_err = self._x_opt[:, k] - self._goal_param
-            J += ca.mtimes([x_err.T, self._cfg.Q, x_err])
-            u = self._u_opt[:, k]
-            J += ca.mtimes([u.T, self._cfg.R, u])
-        # terminal cost
-        x_err = self._x_opt[:, -1] - self._goal_param
-        J += ca.mtimes([x_err.T, self._cfg.Q_e, x_err])
-        self._J = J
+# initial condition equality
+g.append(x_opt[:, 0] - x_0_param)
+lbg.append(np.zeros(nx,))
+ubg.append(np.zeros(nx,))
 
-    def setup_OCP(self):
-        self._define_ocp_variables()
-        self._setup_constraints()
-        self._setup_obj_func()
-        ocp = {
-            'x': ca.veccat(self._x_opt, self._u_opt),
-            'p': ca.vertcat(self._x_0_param, self._goal_param),
-            'g': ca.vertcat(*self._g),
-            'f': self._J
-        }
-        opts = {'ipopt': {'print_level': 0, 'max_iter': 1000}, "print_time": False}
-        self._solver = ca.nlpsol('solver', 'ipopt', ocp, opts)
+# dynamics equality constraints
+for k in range(N):
+    x_next = model.f_disc(x_opt[:, k], u_opt[:, k])
+    g.append(x_opt[:, k+1] - x_next)
+    lbg.append(np.zeros(nx,))
+    ubg.append(np.zeros(nx,))
 
-    def solve_OCP(self, x_0: np.ndarray):
-        nx = self._model.model_config.nx
-        nu = self._model.model_config.nu
-        N = self._cfg.n_hrzn
-        x_0 = x_0.flatten()[:, np.newaxis]
-        assert x_0.shape == (nx, 1)
+# objective
+J = 0.0
+for k in range(N):
+    x_err = x_opt[:, k] - goal_param
+    J += ca.mtimes([x_err.T, cfg.Q, x_err])
+    u = u_opt[:, k]
+    J += ca.mtimes([u.T, cfg.R, u])
+# terminal cost
+x_err = x_opt[:, -1] - goal_param
+J += ca.mtimes([x_err.T, cfg.Q_e, x_err])
 
-        # warm start
-        if self.x_sol is None:
-            self.x_sol = np.tile(x_0, (1, N+1))
-        if self.u_sol is None:
-            self.u_sol = np.zeros((nu, N))
+# Build NLP
+ocp = {
+    'x': ca.veccat(x_opt, u_opt),
+    'p': ca.vertcat(x_0_param, goal_param),
+    'g': ca.vertcat(*g),
+    'f': J
+}
 
-        solution = self._solver(
-            x0=ca.veccat(self.x_sol, self.u_sol),
-            p=ca.vertcat(x_0, self._goal_param),
-            lbg=ca.vertcat(*self._lbg),
-            ubg=ca.vertcat(*self._ubg)
-        )
+# Create solver without IPOPT options
+solver = ca.nlpsol('solver', 'ipopt', ocp)
 
-        sol_vec = solution['x'].full().flatten()
-        x_len = (N+1) * nx
-        x_sol = sol_vec[:x_len].reshape((nx, N+1), order='F')
-        u_sol = sol_vec[x_len:].reshape((nu, N), order='F')
-        self.x_sol = x_sol
-        self.u_sol = u_sol
-        return u_sol[:, 0]
+# Initial guesses
+x0_guess = np.tile(x_init.flatten()[:, np.newaxis], (1, N+1))
+u0_guess = np.zeros((nu, N))
 
+# Solve
+solution = solver(
+    x0=ca.veccat(x0_guess, u0_guess),
+    p=ca.vertcat(x_init.flatten(), goal.flatten()),
+    lbg=ca.vertcat(*lbg),
+    ubg=ca.vertcat(*ubg)
+)
 
-def open_loop():
-    sampling_time = 0.05
-    model = rocketXZModel.RocketXZModel(sampling_time)
-    ocp = RocketXZSimpleOCP(sampling_time, model)
-    ocp.setup_OCP()
+sol_vec = solution['x'].full().flatten()
+x_len = (N+1) * nx
+x_sol = sol_vec[:x_len].reshape((nx, N+1), order='F')
+u_sol = sol_vec[x_len:].reshape((nu, N), order='F')
 
-    # initial state: px, pz, vx, vz, pitch, vpitch
-    x_init = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-    # goal: some forward and up position with nose up
-    goal = np.array([3.0, 3.0, 0.0, 0.0, 0.0, 0.0])
-    ocp._goal_param = goal[:, np.newaxis]
+print(f"Optimal cost: {solution['f'].full().flatten()[0]}")
 
-    # solve once for open-loop plan
-    ocp.solve_OCP(x_init)
-    u_trajectory = ocp.u_sol
-    x_trajectory = ocp.x_sol
-
-    additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0]], [goal[1]]], "color": "tab:orange", "s": 100, "marker":"x"}}
-    model.animateSimulation(x_trajectory, u_trajectory, additional_lines_or_scatters=additional_lines_or_scatters)
-
-
-if __name__ == "__main__":
-    open_loop()
+additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0]], [goal[1]]], "color": "tab:orange", "s": 100, "marker":"x"}}
+model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters)
