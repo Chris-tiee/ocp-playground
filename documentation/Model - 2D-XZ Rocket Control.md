@@ -6,6 +6,7 @@ In this model we consider a rocket in the 2D xz-plane:
 
 ## Dynamics
 The state and control vector are
+
 $$
 \begin{aligned}
 x = \begin{bmatrix}

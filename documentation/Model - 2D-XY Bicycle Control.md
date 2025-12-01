@@ -5,18 +5,21 @@
 ## Dynamics
 We consider a kinematic bicycle model.
 The state and control vectors are
+
 $$
 x = \begin{bmatrix}
 p_x \\
 p_y \\
 \theta
-\end{bmatrix} \in \mathrm{R}^3, \quad u = \begin{bmatrix}
+\end{bmatrix} \in \mathbb{R}^3, \quad u = \begin{bmatrix}
 \delta \\
 V
-\end{bmatrix} \in \mathrm{R}^2
+\end{bmatrix} \in \mathbb{R}^2
 $$
+
 with position $p_x$, $p_y$, and heading angle $\theta$ relative to the $x$-axis. The vehicle is controlled by choosing the steering angle $\delta$ and the velocity $V$.
 The resulting dynamics are
+
 $$
 \begin{bmatrix}
 \dot{p}_ x \\
@@ -31,9 +34,11 @@ V \sin(\theta + \beta) \\
 $$
 
 The side-slip angle $\beta$ is 
+
 $$
 \beta(\delta) = \arctan\left(\frac{l_\mathrm{r} \tan(\delta)}{l_\mathrm{r} + l_\mathrm{f}}\right)
 $$
+
 where $l_\mathrm{r},l_\mathrm{f}$ are the distances of the center of mass from the front resp. rear wheels. In the plot we have $L = l_\mathrm{r} + l_\mathrm{f}$.
 
 
