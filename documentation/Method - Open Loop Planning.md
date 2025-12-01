@@ -26,6 +26,7 @@ $$
 	x_{k+1} = F(x_k, u_k),
 \end{aligned}
 $$
+
 which can be obtained from the continuous-time ODE via numerical integration.
 A commonly used integration method is the Runge-Kutta method of order 4:
 
