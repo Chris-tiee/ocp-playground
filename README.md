@@ -1,4 +1,11 @@
 
+This repository is used as part of the lecture on Numerical Optimal Control by Prof. Moritz Diehl.
+
+https://www.syscop.de/teaching/ws2025/numerical-optimal-control
+
+The repository has been created based on https://github.com/JakobHarz/ControlHackathon by Jakob Harzer and Yunfan Gao.
+
+
 ### Examples
 
 For inspiration, we prepared a few models and methods that you can use as a starting point. 
@@ -43,7 +50,11 @@ pip install pillow
 
 First, please follow the installation instructions above.
 
-1. If you have git installed, clone this repository using `git clone` into a folder of choice. Alternatively, you can just download the folder directly from Github.
+1. If you have git installed, clone this repository using `git clone` into a folder of your choice.
+Alternatively, you can simply download as a ZIP folder via the `<> Code` -Button somewhere in the top right (see screenshot).
+![OmniBot example](documentation/_misc/github_exportzip.png)
+
+
 2. Navigate to the cloned folder in your terminal
 3. Run the example file
 	```bash
