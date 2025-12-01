@@ -48,8 +48,8 @@ Given the system model and constraints, a quite generic discrete time optimal co
 
 $$
 \begin{aligned}
-\min_{x_0,u_0, \dots, u_{N-1}, x_N} \;\;\; &\sum_{k=0}^{N-1} l_k(x_k,u_k) + E(x_N) \\
-\text{s.t.}\quad & 0 = x_0 - \bar{x}_ 0 \\
+\min_{x_0,u_0, \dots, u_{N-1}, x_N} &\sum_{k=0}^{N-1} l_k(x_k,u_k) + E(x_N) \\
+\text{s.t.}\quad & 0 = x_0 - \bar{x}_0, \\
 &  0 = x_{k+1} - F(x_k, u_k), \quad &k=0,\dots,N-1 \\
 &  0 \geq h(x_k, u_k), \quad &k=0,\dots,N-1 
 \end{aligned}
