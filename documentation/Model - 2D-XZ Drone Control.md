@@ -7,7 +7,6 @@ In this model, we consider a drone in the 2D xz-plane:
 ## Dynamics
 The state and control vectors are
 $$
-\begin{aligned}
 x = \begin{bmatrix}
 p \\
 v \\
@@ -20,11 +19,10 @@ v_x \\
 v_z \\
 \phi \\
 \dot{\phi}
-\end{bmatrix}\in \mathbb{R}^6, && u = \begin{bmatrix}
+\end{bmatrix}\in \mathbb{R}^6, \quad u = \begin{bmatrix}
 u_\mathrm{l} \\
 u_\mathrm{r}
-\end{bmatrix} \in \mathbb{R}^2
-\end{aligned}
+\end{bmatrix} \in \mathbb{R}^2,
 $$
 
 with 2D position $p \in \mathbb{R}^2$, velocity $v \in \mathbb{R}^2$, orientation angle $\phi$ relative to the vertical axis and rotational velocity $\dot{\phi}$, such that $\dot{\phi} >0$ corresponds to counterclockwise rotation.
