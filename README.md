@@ -25,6 +25,11 @@ If you already have Python installed on your system or want to use another IDE, 
 pip install numpy scipy matplotlib casadi
 ```
 
+In order to export the animations as gifs, you may also need to
+```bash
+pip install pillow
+```
+
 ### Getting Started
 
 First, please follow the installation instructions above.
@@ -33,7 +38,7 @@ First, please follow the installation instructions above.
 2. Navigate to the cloned folder in your terminal
 3. Run the example file
 	```bash
-	python examples/bicycleXYMultiAgent.py
+	python examples/rocketXZSimpleOCP.py
 	```
 	If you see a figure popping up, that means that everything works as intended.
 

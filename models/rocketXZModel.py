@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib
+import matplotlib.animation as animation
 import numpy as np
 
  
@@ -65,15 +66,16 @@ class RocketXZModel:
         return A, B
 
 
-    def animateSimulation(self, x_trajectory, u_trajectory, additional_lines_or_scatters=None):
-        def compute_rocket_vertices(x:np.ndarray):
+    def animateSimulation(self, x_trajectory, u_trajectory, additional_lines_or_scatters=None, save_path: str = None):
+        def compute_rocket_vertices(x: np.ndarray):
             rocket_width = 0.2
             rot_matrix = np.array([[np.cos(x[4]), -np.sin(x[4])], [np.sin(x[4]), np.cos(x[4])]])
             vertices = np.array([[rocket_width, -rocket_width, -rocket_width, rocket_width, rocket_width], [self.model_config.d, self.model_config.d, -self.model_config.d, -self.model_config.d, self.model_config.d], ])
-            vertices = np.concatenate((vertices, np.array([[0.], [self.model_config.d*1.3]]), np.array([[-rocket_width], [self.model_config.d]])), axis=1)
+            vertices = np.concatenate((vertices, np.array([[0.], [self.model_config.d * 1.3]]), np.array([[-rocket_width], [self.model_config.d]])), axis=1)
             vertices = rot_matrix @ vertices + x[:2].reshape(2, 1)
-            return vertices
-        def compute_thrust_polygon(x:np.ndarray, u:np.ndarray):
+            return vertices.T
+
+        def compute_thrust_vertices(x: np.ndarray, u: np.ndarray):
             thrust_width = 0.1
             thrust_scaling = 0.05
             vertices = np.array([[0.0, thrust_width, -thrust_width], [0.0, -u[0], -u[0]]])
@@ -82,8 +84,7 @@ class RocketXZModel:
             vertices = rot_matrix_1 @ vertices + np.array([[0.], [-self.model_config.d]])
             rot_matrix_2 = np.array([[np.cos(x[4]), -np.sin(x[4])], [np.sin(x[4]), np.cos(x[4])]])
             vertices = rot_matrix_2 @ vertices + x[:2].reshape(2, 1)
-            polygon = patches.Polygon(vertices.T, closed=True, color="tab:red", alpha=0.5, label="Thrust")
-            return polygon
+            return vertices.T
 
         fontsize = 16
         params = {
@@ -100,36 +101,78 @@ class RocketXZModel:
 
         sim_length = u_trajectory.shape[1]
         fig, ax = plt.subplots()
-        for i in range(sim_length+1):
-            ax.set_aspect('equal')
-            ax.set_xlim(-1, 5)
-            ax.set_ylim(-1, 5)
-            ax.set_xlabel(r'$p_{\mathrm{x}}$ in m', fontsize=14)
-            ax.set_ylabel(r'$p_{\mathrm{z}}$ in m', fontsize=14)
-            center_x = x_trajectory[0, i]
-            center_z = x_trajectory[1, i]
-            ax.scatter(center_x, center_z, color="tab:gray", s=50, zorder=2)
-            rocket_vertices = compute_rocket_vertices(x_trajectory[:, i])
-            ax.plot(rocket_vertices[0, :], rocket_vertices[1, :], color="tab:blue", linewidth=2, zorder=1)
-            if i < sim_length:
-                thrust_polygon = compute_thrust_polygon(x_trajectory[:, i], u_trajectory[:, i])
-                ax.add_patch(thrust_polygon)
-            if additional_lines_or_scatters is not None:
-                for key, value in additional_lines_or_scatters.items():
-                    if value["type"] == "scatter":
-                        ax.scatter(value["data"][0], value["data"][1], color=value["color"], s=value["s"], label=key, marker=value["marker"], zorder=3)
-                    elif value["type"] == "line":
-                        ax.plot(value["data"][0], value["data"][1], color=value["color"], linewidth=2, label=key)
-            ax.set_title(f"Rocket XZ Simulation: Step {i+1}")
+        ax.set_aspect('equal')
+        ax.set_xlim(-1, 5)
+        ax.set_ylim(-1, 5)
+        ax.set_xlabel(r'$p_{\mathrm{x}}$ in m', fontsize=14)
+        ax.set_ylabel(r'$p_{\mathrm{z}}$ in m', fontsize=14)
+
+        # static artists
+        center_scatter = ax.scatter([], [], color="tab:gray", s=50, zorder=2)
+        rocket_poly = patches.Polygon(np.zeros((5, 2)), closed=True, color="tab:blue", linewidth=2, zorder=1)
+        ax.add_patch(rocket_poly)
+        thrust_poly = patches.Polygon(np.zeros((3, 2)), closed=True, color="tab:red", alpha=0.5, zorder=0)
+        ax.add_patch(thrust_poly)
+
+        # additional static lines or scatters (these are rendered once)
+        added_artists = []
+        if additional_lines_or_scatters is not None:
+            for key, value in additional_lines_or_scatters.items():
+                if value["type"] == "scatter":
+                    sc = ax.scatter(value["data"][0], value["data"][1], color=value.get("color", "k"), s=value.get("s", 20), label=key, marker=value.get("marker", ","), zorder=3)
+                    added_artists.append(sc)
+                elif value["type"] == "line":
+                    ln, = ax.plot(value["data"][0], value["data"][1], color=value.get("color", "k"), linewidth=2, label=key)
+                    added_artists.append(ln)
+
+        ax.set_title(f"Rocket XZ Simulation: Step 1")
+        if added_artists:
             ax.legend(loc="lower right")
-            fig.subplots_adjust(bottom=0.15)
+        fig.subplots_adjust(bottom=0.15)
+
+        # hardcoded slowdown: make animation run ~2x slower than real-time
+        interval = max(50, int(self._sampling_time * 1000 * 2.0))
+
+        def init():
+            center_scatter.set_offsets(np.empty((0, 2)))
+            rocket_poly.set_xy(np.zeros((5, 2)))
+            thrust_poly.set_xy(np.zeros((3, 2)))
+            return [center_scatter, rocket_poly, thrust_poly] + added_artists
+
+        def update(i):
+            # current state
+            xi = x_trajectory[:, i]
+            center = np.array([xi[0], xi[1]])
+            center_scatter.set_offsets(center.reshape(1, 2))
+
+            rocket_vertices = compute_rocket_vertices(xi)
+            rocket_poly.set_xy(rocket_vertices)
+
             if i < sim_length:
-                plt.show(block=False)
-                plt.pause(0.2)
+                ui = u_trajectory[:, i]
+                thrust_vertices = compute_thrust_vertices(xi, ui)
+                thrust_poly.set_xy(thrust_vertices)
+                thrust_poly.set_visible(True)
             else:
-                plt.show(block=True)
-            ax.clear()
-        return
+                thrust_poly.set_visible(False)
+
+            ax.set_title(f"Rocket XZ Simulation: Step {i+1}")
+            return [center_scatter, rocket_poly, thrust_poly] + added_artists
+
+        anim = animation.FuncAnimation(fig, update, frames=range(sim_length + 1), init_func=init, interval=interval, blit=False, repeat=True)
+
+        # If a save path is provided, attempt to save using PillowWriter (GIF)
+        if save_path is not None:
+            try:
+                fps = max(1, int(round(1000.0 / float(interval))))
+                print(f"Saving animation to {save_path} (fps={fps})")
+                writer = animation.PillowWriter(fps=fps)
+                anim.save(save_path, writer=writer)
+            except Exception as e:
+                print(f"Failed to save animation to {save_path}: {e}")
+
+        plt.show()
+        return anim, fig
 
     def plotSimulation(self, x_trajectory: np.ndarray, u_trajectory: np.ndarray, figsize=(8, 10)):
         """Plot states and controls over time.

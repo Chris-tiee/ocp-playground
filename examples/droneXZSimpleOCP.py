@@ -110,4 +110,7 @@ print(f"Optimal cost: {solution['f'].full().flatten()[0]}")
 fig, axs = model.plotSimulation(x_sol, u_sol)
 # plt.show()
 additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0]], [goal[1]]], "color": "tab:orange", "s": 100, "marker":"x"}}
+    # To save the animation as GIF, uncomment these lines:
+    # save_gif_path = os.path.join(local_path, "drone.gif")
+    # model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters, save_path=save_gif_path)
 model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters)

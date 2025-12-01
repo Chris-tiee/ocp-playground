@@ -127,4 +127,7 @@ additional_lines_or_scatters = {"Ref1": {"type": "line", "data": [p1_ref_val[0, 
 # plot states and controls
 fig, axs = model.plotSimulation(x_sol, u_sol, num_agents=num_agents)
 # plt.show()
+# To save the animation as GIF, uncomment these lines:
+# save_gif_path = os.path.join(local_path, "omnibot.gif")
+# model.animateSimulation(x_sol, u_sol, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters, save_path=save_gif_path)
 model.animateSimulation(x_sol, u_sol, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters)
