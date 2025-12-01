@@ -112,10 +112,10 @@ print(f"Optimal cost: {solution['f'].full().flatten()[0]}")
 
 additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0]], [goal[1]]], "color": "tab:orange", "s": 100, "marker":"x"}}
 model.plotSimulation(x_sol, u_sol)
-    # To save the animation as GIF, uncomment these lines:
-    # save_gif_path = os.path.join(local_path, "rocket.gif")
-    # model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters, save_path=save_gif_path)
-    model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters)
+# To save the animation as GIF, uncomment these lines:
+# save_gif_path = os.path.join(local_path, "rocket.gif")
+# model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters, save_path=save_gif_path)
+model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters)
 
 # If you want to display the static plots without running the animation, uncomment:
 # plt.show()

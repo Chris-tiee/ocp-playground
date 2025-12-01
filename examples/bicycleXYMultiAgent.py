@@ -128,7 +128,7 @@ print(f"Optimal cost: {sol['f'].full().flatten()[0]}")
 fig, axs = model.plotSimulation(x_sol, u_sol, num_agents=num_agents)
 # plt.show()
 additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0], goal[3]], [goal[1], goal[4]]], "color": "tab:orange", "s": 100, "marker": "x"}}
-    # To save the animation as GIF, uncomment these lines:
-    # save_gif_path = os.path.join(local_path, "bicycle_multi.gif")
-    # model.animateSimulation(x_sol, u_sol, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters, save_path=save_gif_path)
+# To save the animation as GIF, uncomment these lines:
+# save_gif_path = os.path.join(local_path, "bicycle_multi.gif")
+# model.animateSimulation(x_sol, u_sol, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters, save_path=save_gif_path)
 model.animateSimulation(x_sol, u_sol, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters)
