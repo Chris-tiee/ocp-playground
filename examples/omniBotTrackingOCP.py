@@ -8,6 +8,7 @@ local_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(local_path, ".."))
 
 import models.omniBotXYModel as omniBotXYModel
+import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -123,4 +124,7 @@ u_sol = sol_vec[(n_hrzn+1) * nx * num_agents:].reshape((nu * num_agents, n_hrzn)
 
 additional_lines_or_scatters = {"Ref1": {"type": "line", "data": [p1_ref_val[0, :], p1_ref_val[1, :]], "color": "tab:orange", "s": 100, "marker":"x"},
                                 "Ref2": {"type": "line", "data": [p2_ref_val[0, :], p2_ref_val[1, :]], "color": "tab:orange", "s": 100, "marker":"x"}}
+# plot states and controls
+fig, axs = model.plotSimulation(x_sol, u_sol, num_agents=num_agents)
+# plt.show()
 model.animateSimulation(x_sol, u_sol, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters)

@@ -106,8 +106,8 @@ class RocketXZModel:
             ax.set_aspect('equal')
             ax.set_xlim(-1, 5)
             ax.set_ylim(-1, 5)
-            ax.set_xlabel(r'$p_{\mathrm{x}}$ (m)', fontsize=14)
-            ax.set_ylabel(r'$p_{\mathrm{z}}$ (m)', fontsize=14)
+            ax.set_xlabel(r'$p_{\mathrm{x}}$ in m', fontsize=14)
+            ax.set_ylabel(r'$p_{\mathrm{z}}$ in m', fontsize=14)
             center_x = x_trajectory[0, i]
             center_z = x_trajectory[1, i]
             ax.scatter(center_x, center_z, color="tab:gray", s=50, zorder=2)
@@ -132,3 +132,70 @@ class RocketXZModel:
                 plt.show(block=True)
             ax.clear()
         return
+
+    def plotSimulation(self, x_trajectory: np.ndarray, u_trajectory: np.ndarray, figsize=(8, 10)):
+        """Plot states and controls over time.
+
+        States grouping:
+          - positions px and pz in one subplot
+          - velocities vx and vz in one subplot
+          - pitch in one subplot
+          - pitch rate in one subplot
+
+        Controls are plotted as piecewise-constant (step) signals with
+        `where='post'` so that u_k is extended until t_{k+1}.
+        """
+        dt = self._sampling_time
+        nx = self.model_config.nx
+        nu = self.model_config.nu
+        sim_length = u_trajectory.shape[1]
+
+        t_x = np.arange(sim_length + 1) * dt
+        # we will plot controls on the same grid as states; append NaN to controls
+        # so their length matches t_x and step plotting with where='post' works
+        # (u_k shown until t_{k+1}).
+
+        fig, axs = plt.subplots(6, 1, figsize=figsize, constrained_layout=True)
+
+        # Positions px, pz
+        axs[0].plot(t_x, x_trajectory[0, :], label=r'$p_{\mathrm{x}}$')
+        axs[0].plot(t_x, x_trajectory[1, :], label=r'$p_{\mathrm{z}}$')
+        axs[0].set_ylabel(r'position $p$ in m')
+        axs[0].legend()
+
+        # Velocities vx, vz
+        axs[1].plot(t_x, x_trajectory[2, :], label=r'$v_{\mathrm{x}}$')
+        axs[1].plot(t_x, x_trajectory[3, :], label=r'$v_{\mathrm{z}}$')
+        axs[1].set_ylabel(r'velocity $v$ in m/s')
+        axs[1].legend()
+
+        # Pitch
+        axs[2].plot(t_x, x_trajectory[4, :], label='pitch')
+        axs[2].set_ylabel(r'pitch $\theta$ in rad')
+
+        # Pitch rate
+        axs[3].plot(t_x, x_trajectory[5, :], label='pitch rate')
+        axs[3].set_ylabel(r'pitch rate $\dot{\theta}$ in rad/s')
+
+        # Controls: thrust T (extend with NaN to align with t_x)
+        u_T_plot = np.concatenate((np.asarray(u_trajectory[0, :]).flatten(), [np.nan]))
+        axs[4].step(t_x, u_T_plot, where='post', label='T')
+        axs[4].set_ylabel(r'thrust $T$ in N')
+
+        # Controls: delta
+        # Controls: delta (extend with NaN to align with t_x)
+        u_delta_plot = np.concatenate((np.asarray(u_trajectory[1, :]).flatten(), [np.nan]))
+        axs[5].step(t_x, u_delta_plot, where='post', label='delta')
+        axs[5].set_ylabel(r'gimbal angle $\delta$ in rad')
+        axs[5].set_xlabel('time in s')
+
+        fig.suptitle('Rocket states and controls')
+
+        # Set x-axis limits exactly to the plotted time range (no extra whitespace)
+        x_min = t_x[0]
+        x_max = t_x[-1]
+        for ax in axs:
+            ax.set_xlim(x_min, x_max)
+
+        return fig, axs
+    

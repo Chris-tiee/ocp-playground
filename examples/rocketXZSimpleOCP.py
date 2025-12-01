@@ -111,4 +111,8 @@ u_sol = sol_vec[x_len:].reshape((nu, N), order='F')
 print(f"Optimal cost: {solution['f'].full().flatten()[0]}")
 
 additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0]], [goal[1]]], "color": "tab:orange", "s": 100, "marker":"x"}}
+model.plotSimulation(x_sol, u_sol)
 model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters)
+
+# If you want to display the static plots without running the animation, uncomment:
+# plt.show()

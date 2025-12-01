@@ -8,6 +8,7 @@ local_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(local_path, ".."))
 
 import models.droneXZModel as droneXZModel
+import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -85,8 +86,7 @@ ocp = {
     'g': ca.vertcat(*g),
     'f': J
 }
-opts = {'ipopt': {'print_level': 0, 'max_iter': 1000}, "print_time": False}
-solver = ca.nlpsol('solver', 'ipopt', ocp, opts)
+solver = ca.nlpsol('solver', 'ipopt', ocp)
 
 # Initial guesses
 x0_guess = np.tile(x_init.flatten()[:, np.newaxis], (1, N+1))
@@ -106,5 +106,8 @@ u_sol = sol_vec[(N+1) * nx:].reshape((nu, N), order='F')
 
 print(f"Optimal cost: {solution['f'].full().flatten()[0]}")
 
+# plot states and controls (returns fig, axs). Caller may call plt.show() if desired.
+fig, axs = model.plotSimulation(x_sol, u_sol)
+# plt.show()
 additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0]], [goal[1]]], "color": "tab:orange", "s": 100, "marker":"x"}}
 model.animateSimulation(x_sol, u_sol, additional_lines_or_scatters=additional_lines_or_scatters)

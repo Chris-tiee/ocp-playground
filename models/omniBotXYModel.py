@@ -71,8 +71,8 @@ class OmniBotXYModel:
             ax.set_aspect('equal')
             ax.set_xlim(-1, 5)
             ax.set_ylim(-1, 5)
-            ax.set_xlabel(r'$p_{\mathrm{x}}$ (m)', fontsize=14)
-            ax.set_ylabel(r'$p_{\mathrm{y}}$ (m)', fontsize=14)
+            ax.set_xlabel(r'$p_{\mathrm{x}}$ in m', fontsize=14)
+            ax.set_ylabel(r'$p_{\mathrm{y}}$ in m', fontsize=14)
 
             for i_agent in range(num_agents):
                 ax.scatter(x_trajectory[i_agent*nx, i], x_trajectory[i_agent*nx+1, i], color="tab:gray", s=50, zorder=2)
@@ -95,3 +95,65 @@ class OmniBotXYModel:
                 plt.show(block=True)
             ax.clear()
         return
+
+    def plotSimulation(self, x_trajectory: np.ndarray, u_trajectory: np.ndarray, num_agents:int=1, figsize=(8,10)):
+        """Plot positions, velocities and controls for OmniBot agents.
+
+        - Positions px, py (one trace per agent)
+        - Velocities vx, vy (one trace per agent)
+        - Controls ax, ay (step signals per agent)
+        """
+        dt = self._sampling_time
+        nx = self.model_config.nx
+        nu = self.model_config.nu
+        sim_length = u_trajectory.shape[1]
+
+        t_x = np.arange(sim_length + 1) * dt
+
+        # create 4 rows x num_agents columns so each agent gets its own column
+        fig, axes = plt.subplots(4, num_agents, figsize=(figsize[0] * max(1, num_agents), figsize[1]), constrained_layout=True)
+        axes = np.atleast_2d(axes)
+        if axes.shape[0] != 4:
+            axes = axes.reshape(4, num_agents)
+
+        # Positions per agent
+        for i_agent in range(num_agents):
+            ax = axes[0, i_agent]
+            ax.plot(t_x, x_trajectory[i_agent*nx, :], label=r'$p_x$')
+            ax.plot(t_x, x_trajectory[i_agent*nx+1, :], label=r'$p_y$')
+            ax.set_ylabel(r'position $p$ in m')
+            ax.set_title(f'Agent {i_agent}')
+            ax.legend()
+
+        # Velocities per agent
+        for i_agent in range(num_agents):
+            ax = axes[1, i_agent]
+            ax.plot(t_x, x_trajectory[i_agent*nx+2, :], label=r'$v_x$')
+            ax.plot(t_x, x_trajectory[i_agent*nx+3, :], label=r'$v_y$')
+            ax.set_ylabel(r'velocity $v$ in m/s')
+            ax.legend()
+
+        # Controls ax
+        for i_agent in range(num_agents):
+            ax = axes[2, i_agent]
+            ax_plot = np.concatenate((np.asarray(u_trajectory[i_agent*nu, :]).flatten(), [np.nan]))
+            ax.step(t_x, ax_plot, where='post')
+            ax.set_ylabel(r'accel $a_x$ in m/s$^2$)')
+
+        # Controls ay
+        for i_agent in range(num_agents):
+            ax = axes[3, i_agent]
+            ay_plot = np.concatenate((np.asarray(u_trajectory[i_agent*nu+1, :]).flatten(), [np.nan]))
+            ax.step(t_x, ay_plot, where='post')
+            ax.set_ylabel(r'accel $a_y$ in m/s$^2$)')
+            ax.set_xlabel('time (s)')
+
+        # note: additional reference lines/scatters removed from plotSimulation; use animateSimulation to show markers in animation
+        fig.suptitle('OmniBot states and controls')
+        x_min = t_x[0]
+        x_max = t_x[-1]
+        for row in range(4):
+            for col in range(num_agents):
+                axes[row, col].set_xlim(x_min, x_max)
+
+        return fig, axes

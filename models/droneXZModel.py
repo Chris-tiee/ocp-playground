@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib
+import numpy as np
 
 # BaseModel removed: models should initialize sampling time directly
 
@@ -75,8 +76,8 @@ class DroneXZModel:
             ax.set_aspect('equal')
             ax.set_xlim(-0.5, 2.0)
             ax.set_ylim(-0.5, 2.0)
-            ax.set_xlabel(r'$p_{\mathrm{x}}$ (m)', fontsize=14)
-            ax.set_ylabel(r'$p_{\mathrm{z}}$ (m)', fontsize=14)
+            ax.set_xlabel(r'$p_{\mathrm{x}}$ in m', fontsize=14)
+            ax.set_ylabel(r'$p_{\mathrm{z}}$ in m', fontsize=14)
             left_x = x_trajectory[0, i] - self.model_config.d * ca.cos(x_trajectory[4, i])
             left_z = x_trajectory[1, i] - self.model_config.d * ca.sin(x_trajectory[4, i])
             right_x = x_trajectory[0, i] + self.model_config.d * ca.cos(x_trajectory[4, i])
@@ -107,3 +108,54 @@ class DroneXZModel:
                 plt.show(block=True)
             ax.clear()
         return
+
+    def plotSimulation(self, x_trajectory: np.ndarray, u_trajectory: np.ndarray, figsize=(8, 10)):
+        """Plot states and controls over time for the drone.
+        """
+        dt = self._sampling_time
+        sim_length = u_trajectory.shape[1]
+
+        t_x = np.arange(sim_length + 1) * dt
+
+        fig, axs = plt.subplots(6, 1, figsize=figsize, constrained_layout=True)
+
+        # Positions px, pz
+        axs[0].plot(t_x, x_trajectory[0, :], label=r'$p_{\mathrm{x}}$')
+        axs[0].plot(t_x, x_trajectory[1, :], label=r'$p_{\mathrm{z}}$')
+        axs[0].set_ylabel(r'position $p$ in m')
+        axs[0].legend()
+
+        # Velocities vx, vz
+        axs[1].plot(t_x, x_trajectory[2, :], label=r'$v_{\mathrm{x}}$')
+        axs[1].plot(t_x, x_trajectory[3, :], label=r'$v_{\mathrm{z}}$')
+        axs[1].set_ylabel(r'velocity $v$ in m/s')
+        axs[1].legend()
+
+        # Pitch
+        axs[2].plot(t_x, x_trajectory[4, :], label='pitch')
+        axs[2].set_ylabel(r'pitch $\theta$ in rad')
+
+        # Pitch rate
+        axs[3].plot(t_x, x_trajectory[5, :], label='pitch rate')
+        axs[3].set_ylabel(r'pitch rate $\dot{\theta}$ in rad/s')
+
+        # Controls: fl
+        u_fl_plot = np.concatenate((np.asarray(u_trajectory[0, :]).flatten(), [np.nan]))
+        axs[4].step(t_x, u_fl_plot, where='post', label='fl')
+        axs[4].set_ylabel(r'left thrust $f_{\mathrm{l}}$ in N')
+
+        # Controls: fr
+        u_fr_plot = np.concatenate((np.asarray(u_trajectory[1, :]).flatten(), [np.nan]))
+        axs[5].step(t_x, u_fr_plot, where='post', label='fr')
+        axs[5].set_ylabel(r'right thrust $f_{\mathrm{r}}$ in N')
+        axs[5].set_xlabel('time in s')
+
+        fig.suptitle('Drone states and controls')
+
+        # Set x-axis limits exactly
+        x_min = t_x[0]
+        x_max = t_x[-1]
+        for ax in axs:
+            ax.set_xlim(x_min, x_max)
+
+        return fig, axs

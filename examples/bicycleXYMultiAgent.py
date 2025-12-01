@@ -124,5 +124,8 @@ u_sol = sol_vec[(n_hrzn + 1) * nx * num_agents:].reshape((nu * num_agents, n_hrz
 print(f"Optimal cost: {sol['f'].full().flatten()[0]}")
 
 # Visualize using model helper (same as original)
+# plot states and controls
+fig, axs = model.plotSimulation(x_sol, u_sol, num_agents=num_agents)
+# plt.show()
 additional_lines_or_scatters = {"Goal": {"type": "scatter", "data": [[goal[0], goal[3]], [goal[1], goal[4]]], "color": "tab:orange", "s": 100, "marker": "x"}}
 model.animateSimulation(x_sol, u_sol, num_agents=num_agents, additional_lines_or_scatters=additional_lines_or_scatters)

@@ -67,8 +67,8 @@ class BicycleXYModel:
             ax.set_aspect('equal')
             ax.set_xlim(-1, 5)
             ax.set_ylim(-1, 5)
-            ax.set_xlabel(r'$p_{\mathrm{x}}$ (m)', fontsize=14)
-            ax.set_ylabel(r'$p_{\mathrm{y}}$ (m)', fontsize=14)
+            ax.set_xlabel(r'$p_{\mathrm{x}}$ in m', fontsize=14)
+            ax.set_ylabel(r'$p_{\mathrm{y}}$ in m', fontsize=14)
 
             for i_agent in range(num_agents):
                 front_x = x_trajectory[i_agent*nx, i] + self.model_config.lf * ca.cos(x_trajectory[i_agent*nx+2, i])
@@ -95,9 +95,75 @@ class BicycleXYModel:
             ax.legend()
             if i < sim_length:
                 plt.show(block=False)
-                plt.pause(0.3)
+                plt.pause(0.2)
             else:
                 plt.show(block=True)
             ax.clear()
         return
+    
+    def plotSimulation(self, x_trajectory: np.ndarray, u_trajectory: np.ndarray, num_agents:int=1, figsize=(8, 10)):
+        """Plot positions, yaw and controls for one or multiple bicycle agents.
+
+        - Positions: px, py (one trace per agent)
+        - Yaw: yaw (one trace per agent)
+        - Controls: steering delta and speed V (plotted as step signals per agent)
+        """
+        dt = self._sampling_time
+        nx = self.model_config.nx
+        nu = self.model_config.nu
+        sim_length = u_trajectory.shape[1]
+
+        t_x = np.arange(sim_length + 1) * dt
+
+        # Create 4 rows x num_agents columns so each agent has its own column
+        fig, axes = plt.subplots(4, num_agents, figsize=(figsize[0] * max(1, num_agents), figsize[1]), constrained_layout=True)
+        # Ensure axes is 2D array with shape (4, num_agents)
+        axes = np.atleast_2d(axes)
+        if axes.shape[0] != 4:
+            axes = axes.reshape(4, num_agents)
+
+        # Positions: each agent in its own column
+        for i_agent in range(num_agents):
+            ax = axes[0, i_agent]
+            ax.plot(t_x, x_trajectory[i_agent*nx, :], label=r'$p_x$')
+            ax.plot(t_x, x_trajectory[i_agent*nx+1, :], label=r'$p_y$')
+            ax.set_ylabel(r'position $p$ in m')
+            ax.set_title(f'Agent {i_agent}')
+            ax.legend()
+
+        # Yaw per agent (single trace per subplot -> no legend)
+        for i_agent in range(num_agents):
+            ax = axes[1, i_agent]
+            ax.plot(t_x, x_trajectory[i_agent*nx+2, :])
+            ax.set_ylabel(r'yaw $\theta$ in rad')
+
+        # Controls: steering delta (step) per agent
+        for i_agent in range(num_agents):
+            ax = axes[2, i_agent]
+            delta = u_trajectory[i_agent*nu, :]
+            delta_plot = np.concatenate((np.asarray(delta).flatten(), [np.nan]))
+            ax.step(t_x, delta_plot, where='post')
+            ax.set_ylabel(r'steering $\delta$ in rad')
+
+        # Controls: speed V per agent
+        for i_agent in range(num_agents):
+            ax = axes[3, i_agent]
+            V = u_trajectory[i_agent*nu+1, :]
+            V_plot = np.concatenate((np.asarray(V).flatten(), [np.nan]))
+            ax.step(t_x, V_plot, where='post')
+            ax.set_ylabel(r'speed $V$ in m/s')
+            ax.set_xlabel('time in s')
+
+        # note: additional reference lines/scatters removed from plotSimulation; use animateSimulation to show markers in animation
+
+        fig.suptitle('Bicycle states and controls')
+
+        x_min = t_x[0]
+        x_max = t_x[-1]
+        # set x-limits for all axes
+        for row in range(4):
+            for col in range(num_agents):
+                axes[row, col].set_xlim(x_min, x_max)
+
+        return fig, axes
     
