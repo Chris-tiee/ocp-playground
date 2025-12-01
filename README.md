@@ -52,7 +52,7 @@ First, please follow the installation instructions above.
 
 1. If you have git installed, clone this repository using `git clone` into a folder of your choice.
 Alternatively, you can simply download as a ZIP folder via the `<> Code` -Button somewhere in the top right (see screenshot).
-![OmniBot example](documentation/_misc/github_exportzip.png)
+![Screenshot_GithubDownloadZIP](documentation/_misc/github_exportzip.png)
 
 
 2. Navigate to the cloned folder in your terminal
