@@ -6,21 +6,18 @@
 We consider a kinematic bicycle model.
 The state and control vectors are
 $$
-\begin{aligned}
 x = \begin{bmatrix}
 p_x \\
 p_y \\
 \theta
-\end{bmatrix} \in \mathbb{R}^3, && u = \begin{bmatrix}
+\end{bmatrix} \in \mathbb{R}^3, \quad u = \begin{bmatrix}
 \delta \\
 V
 \end{bmatrix} \in \mathbb{R}^2
-\end{aligned}
 $$
 with position $p_x$, $p_y$, and heading angle $\theta$ relative to the $x$-axis. The vehicle is controlled by choosing the steering angle $\delta$ and the velocity $V$.
 The resulting dynamics are
 $$
-\begin{aligned}
 \begin{bmatrix}
 \dot{p}_ x \\
 \dot{p}_ y \\
@@ -31,7 +28,6 @@ V \sin(\theta + \beta) \\
 \frac{V}{l_\mathrm{r}}\sin(\beta(\delta
 ))
 \end{bmatrix}
-\end{aligned}
 $$
 
 The side-slip angle $\beta$ is 
