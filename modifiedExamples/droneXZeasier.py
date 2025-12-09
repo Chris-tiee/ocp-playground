@@ -24,7 +24,7 @@ class GoalReachingCtrlConfig:
     # Weight matrix for input control
     R: np.ndarray = field(default_factory=lambda: np.diag([0.01, 0.01]))
     #  horizon length
-    n_hrzn = 250
+    n_hrzn = 100
 
 # --- Linear/script style open-loop OCP (no MPC) ---
 sampling_time = 0.05
@@ -33,7 +33,7 @@ cfg = GoalReachingCtrlConfig()
 
 # initial and goal (from original main)
 x_init = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-goal = np.array([3.0, 3.0])
+goal = np.array([1.0, 1.0])
 
 model = droneXZModel.DroneXZModel(sampling_time)
 nx = model.model_config.nx #state size
@@ -123,7 +123,29 @@ def build_reference_trajectory(N, nx, goal):
 
     return x_ref
 
-x_ref = build_reference_trajectory(N, nx, goal)
+def build_trajectory_easy(N, nx, goal):
+    x_ref = np.zeros((N+1,nx))
+    N1 = max(1, int(0.9 * N))
+    N2 = N-N1
+    A = 0.5 #Wave Height
+    for k in range(N1+1):
+        alpha = k/N1
+        x_ref[k,1] = alpha * goal[1] + 0.5 * np.sin(np.pi*alpha)
+        x_ref[k,0] = alpha * goal[0]
+        x_ref[k, 2:] = 0.0   # v_x, v_z, pitch, vpitch = 0
+    
+    for i in range(1, N2+1):
+        k = N1 + i
+        if k > N:
+            break
+        x_ref[k,1] = goal[1]
+        x_ref[k,0] = goal[0]
+        x_ref[k, 2:] = 0.0   # v_x, v_z, pitch, vpitch = 0
+    
+    return x_ref
+
+# x_ref = build_reference_trajectory(N, nx, goal)
+x_ref = build_trajectory_easy(N, nx, goal)
 # convert to CasADi matrix with shape (nx, N+1)
 x_ref_DM = ca.DM(x_ref.T)   # now column k is x_ref at step k
 
@@ -155,8 +177,8 @@ for k in range(N):
     ubg.append(np.zeros(nx,))
 
 # hardcoded obstacle
-obs_c = np.array([x_ref[(N-N//10),0], x_ref[(N-N//10),1]])
-obs_R = 0.15
+obs_c = np.array([x_ref[(N-2*(N//3)),0], x_ref[(N-2*(N//3)),1]])
+obs_R = 0.09
 for k in range(N+1):
     px_k = x_opt[0,k]
     pz_k = x_opt[1,k]

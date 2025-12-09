@@ -72,8 +72,8 @@ class DroneXZModel:
         sim_length = u_trajectory.shape[1]
         fig, ax = plt.subplots()
         ax.set_aspect('equal')
-        ax.set_xlim(-0.5, 3.5)
-        ax.set_ylim(-0.5, 3.5)
+        ax.set_xlim(-0.5, 1.5)
+        ax.set_ylim(-0.5, 1.5)
         ax.set_xlabel(r'$p_{\mathrm{x}}$ in m', fontsize=14)
         ax.set_ylabel(r'$p_{\mathrm{z}}$ in m', fontsize=14)
 
