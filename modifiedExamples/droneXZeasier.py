@@ -24,7 +24,7 @@ class GoalReachingCtrlConfig:
     # Weight matrix for input control
     R: np.ndarray = field(default_factory=lambda: np.diag([0.01, 0.01]))
     #  horizon length
-    n_hrzn = 100
+    n_hrzn = 150
 
 # --- Linear/script style open-loop OCP (no MPC) ---
 sampling_time = 0.05
@@ -48,86 +48,10 @@ u_opt = ca.MX.sym('u', nu, N) # [ul, ur] for N steps
 x_0_param = ca.MX.sym('x_0', nx)
 goal_param = ca.MX.sym('goal', 2)
 
-# Defining the path to follow:
-def build_reference_trajectory(N, nx, goal):
-    # Defining the path to follow: figure-8 around the goal position
-    x_ref = np.zeros((N+1, nx))
-
-    # Phase length fractions
-    frac1 = 0.3   # 30% of horizon: departure from origin
-    frac2 = 0.5   # 50% of horizon: circular loop
-    # remaining 20%: go to goal and stay there
-
-    N1 = max(1, int(frac1 * N))
-    N2 = max(2, int(frac2 * N))
-    N3 = N - N1 - N2
-    if N3 < 1:
-        N3 = 1
-        N2 = N - N1 - N3
-
-    # ---- Phase 1: straight line from (0,0) to (2.25, 1.5) ----
-    px_start = 0.0
-    pz_start = 0.0
-    px_phase1_end = 2.25
-    pz_phase1_end = 1.5
-
-    for k in range(N1 + 1):
-        alpha = k / max(1, N1)
-        px_ref = (1 - alpha) * px_start + alpha * px_phase1_end
-        pz_ref = (1 - alpha) * pz_start + alpha * pz_phase1_end
-
-        x_ref[k, 0] = px_ref
-        x_ref[k, 1] = pz_ref
-        x_ref[k, 2:] = 0.0   # v_x, v_z, pitch, vpitch = 0
-
-    # ---- Phase 2: circular loop in positive quadrant (bigger) ----
-    center_x = 1.5
-    center_z = 1.5
-    radius = 0.75
-
-    for i in range(N2 + 1):
-        k = N1 + i
-        if k > N:
-            break
-        theta = 2.0 * np.pi * i / max(1, N2)   # one full loop
-        px_ref = center_x + radius * np.cos(theta)
-        pz_ref = center_z + radius * np.sin(theta)
-
-        x_ref[k, 0] = px_ref
-        x_ref[k, 1] = pz_ref
-        x_ref[k, 2:] = 0.0
-
-    # index & position where Phase 2 ends
-    last_phase2_index = min(N1 + N2, N)
-    px_last = x_ref[last_phase2_index, 0]
-    pz_last = x_ref[last_phase2_index, 1]
-
-    # ---- Phase 3: go to (3,3) and stay there ----
-    for i in range(1, N3 + 1):
-        k = last_phase2_index + i
-        if k > N:
-            break
-        alpha = i / max(1, N3)
-        px_ref = (1 - alpha) * px_last + alpha * goal[0]
-        pz_ref = (1 - alpha) * pz_last + alpha * goal[1]
-
-        x_ref[k, 0] = px_ref
-        x_ref[k, 1] = pz_ref
-        x_ref[k, 2:] = 0.0
-
-    # fill any remaining steps with exact goal
-    for k in range(last_phase2_index + N3 + 1, N+1):
-        x_ref[k, 0] = goal[0]
-        x_ref[k, 1] = goal[1]
-        x_ref[k, 2:] = 0.0
-
-    return x_ref
-
 def build_trajectory_easy(N, nx, goal):
     x_ref = np.zeros((N+1,nx))
     N1 = max(1, int(0.9 * N))
     N2 = N-N1
-    A = 0.5 #Wave Height
     for k in range(N1+1):
         alpha = k/N1
         x_ref[k,1] = alpha * goal[1] + 0.5 * np.sin(np.pi*alpha)
@@ -176,29 +100,29 @@ for k in range(N):
     lbg.append(np.zeros(nx,))
     ubg.append(np.zeros(nx,))
 
-# hardcoded obstacle
-obs_c = np.array([x_ref[(N-2*(N//3)),0], x_ref[(N-2*(N//3)),1]])
-obs_R = 0.09
-for k in range(N+1):
-    px_k = x_opt[0,k]
-    pz_k = x_opt[1,k]
-    h_k = obs_R**2 - ((px_k - obs_c[0])**2 + (pz_k - obs_c[1])**2)
+# # hardcoded obstacle
+# obs_c = np.array([x_ref[(N-2*(N//3)),0], x_ref[(N-2*(N//3)),1]])
+# obs_R = 0.09
+# for k in range(N+1):
+#     px_k = x_opt[0,k]
+#     pz_k = x_opt[1,k]
+#     h_k = obs_R**2 - ((px_k - obs_c[0])**2 + (pz_k - obs_c[1])**2)
+#     g.append(h_k)
+#     lbg.append(-ca.inf)
+#     ubg.append(0.0)
 
-    g.append(h_k)
-    lbg.append(-ca.inf)
-    ubg.append(0.0)
-#to draw it
-theta = np.linspace(0, 2 * np.pi, 80)
-obs_x = obs_c[0] + obs_R * np.cos(theta)
-obs_z = obs_c[1] + obs_R * np.sin(theta)
+# #to draw it
+# theta = np.linspace(0, 2 * np.pi, 80)
+# obs_x = obs_c[0] + obs_R * np.cos(theta)
+# obs_z = obs_c[1] + obs_R * np.sin(theta)
 
 # objective
 J = 0.0
 u_equilibrium = 0.5 * model.model_config.mass * model.model_config.gravity * ca.DM.ones(2, 1)
 for k in range(N):
     J += (x_opt[:, k] - x_ref_DM[:, k]).T @ cfg.Q @ (x_opt[:, k] - x_ref_DM[:, k])  #state
+    J += (u_opt[:, k] - u_equilibrium).T @ cfg.R @ (u_opt[:, k] - u_equilibrium)    #control
 # terminal cost E(x_N)
-J += (u_opt[:, N-1] - u_equilibrium).T @ cfg.R @ (u_opt[:, N-1] - u_equilibrium)    #control
 J += (x_opt[:, -1] - x_ref_DM[:, -1]).T @ cfg.Q_e @ (x_opt[:, -1] - x_ref_DM[:, -1])
 
 # Build NLP
@@ -229,28 +153,8 @@ u_sol = sol_vec[(N+1) * nx:].reshape((nu, N), order='F')
 
 print(f"Optimal cost: {solution['f'].full().flatten()[0]}")
 
-# plot states and controls (returns fig, axs). Caller may call plt.show() if desired.
-# fig, axs = model.plotSimulation(x_sol, u_sol)
-additional_lines_or_scatters = {
-    "Reference path": {
-        "type": "line",
-        "data": [x_ref[:, 0], x_ref[:, 1]],   # px_ref vs pz_ref
-        "color": "tab:red"
-    },
-    "Goal": {
-        "type": "scatter",
-        "data": [[goal[0]], [goal[1]]],
-        "color": "tab:orange",
-        "s": 100,
-        "marker": "x"
-    },
-    "Obstacle": {
-        "type": "line",
-        "data": [obs_x,obs_z],
-        "color": "tab:purple"
-    }
-}
-
+# # plot states and controls (returns fig, axs). Caller may call plt.show() if desired.
+# # fig, axs = model.plotSimulation(x_sol, u_sol)
 # additional_lines_or_scatters = {
 #     "Reference path": {
 #         "type": "line",
@@ -263,8 +167,35 @@ additional_lines_or_scatters = {
 #         "color": "tab:orange",
 #         "s": 100,
 #         "marker": "x"
+#     },
+#     "obs": {
+#         "type": "scatter",
+#         "data": [[obs_c[0]], [obs_c[1]]],
+#         "color": "tab:purple",
+#         "s": 100,
+#         "marker": "o"
+#     },
+#     "Obstacle": {
+#         "type": "line",
+#         "data": [obs_x,obs_z],
+#         "color": "tab:purple"
 #     }
 # }
+
+additional_lines_or_scatters = {
+    "Reference path": {
+        "type": "line",
+        "data": [x_ref[:, 0], x_ref[:, 1]],   # px_ref vs pz_ref
+        "color": "tab:red"
+    },
+    "Goal": {
+        "type": "scatter",
+        "data": [[goal[0]], [goal[1]]],
+        "color": "tab:orange",
+        "s": 100,
+        "marker": "x"
+    }
+}
 
 # To save the animation as GIF, uncomment these lines:
 # save_gif_path = os.path.join(local_path, "drone.gif")
